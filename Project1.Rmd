@@ -100,10 +100,37 @@ data5<-records(5,"New Jersey Devils")
 
 # Functions read stats API
 ```{r functions for stats}
+base2<-"https://statsapi.web.nhl.com/api/v1/teams"
+endpoint2<-"?expand=team.roster"
+endpoint2<-"?expand=person.names"
+endpoint2<-"?expand=team.schedule.next"
+endpoint2<-"?expand=team.schedule.previous"
+endpoint2<-"?expand=team.stats"
+endpoint2<-"?expand=team.roster&season=20142015"
+endpoint2<-"?teamId"
+endpoint2<-"?stats=statsSingleSeasonPlayoffs "
+call2<-paste0(base2,endpoint2)
+
+#create a lookup table for team id and team name
+get2<-GET(call2)
+get2_text<-content(get2,"text")
+get2_json<-fromJSON(get2_text,flatten= TRUE)
+get2_df<-as.data.frame(get2_json)
+teamtable<-select(get2_df,teams.teamName, teams.id)
+tlook<-teamtable$teams.id
+names(tlook)<-teamtable$teams.teamName
+
 nhlstats<-function(modifiers){
-  base<-"https://statsapi.web.nhl.com/api/v1/teams"
-  modifiers<-""
-}
+  base2<-"https://statsapi.web.nhl.com/api/v1/teams"
+  if (modifiers==1){
+    modifiers<-"?expand=team.roster"
+    call2<-paste0(base2,modifiers)
+    get2<-GET(call2)
+    get2_text<-content(get2,"text")
+    get2_json<-fromJSON(get2_text,flatten= TRUE)
+    get2_df<-as.data.frame(get2_json)
+  }
+}  
 ```
 
 
