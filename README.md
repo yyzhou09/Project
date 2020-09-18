@@ -4,9 +4,11 @@ Yuying Zhou
 9/14/2020
 
   - [Needed Packages](#needed-packages)
-  - [Functions to read NHL records](#functions-to-read-nhl-records)
-  - [Functions read stats API](#functions-read-stats-api)
-  - [create a wrapper function](#create-a-wrapper-function)
+  - [Create a function to read NHL
+    records](#create-a-function-to-read-nhl-records)
+  - [Create a function to read stats
+    API](#create-a-function-to-read-stats-api)
+  - [Create a wrapper function](#create-a-wrapper-function)
   - [Explore data](#explore-data)
 
 # Needed Packages
@@ -18,11 +20,10 @@ library(jsonlite)
 library(tidyverse)
 ```
 
-# Functions to read NHL records
+# Create a function to read NHL records
 
 ``` r
-#create a franchise lookup table
-# functions with endpoints, users can put endpoint 1-5 for different endpoints
+#create a franchise lookup table with franchise name and franchise ID
 base<- "https://records.nhl.com/site/api"
 endpoint1<-"/franchise-season-records?cayenneExp=franchiseId"
 call1<-paste0(base,endpoint1)
@@ -35,50 +36,51 @@ flook<-franchisetable$data.franchiseId
 names(flook)<-franchisetable$data.franchiseName
 
 #create the function
+# functions with endpoints, users can put endpoint 1-5 for different endpoints
 records<-function(endpoint,franchise=NULL){
   base<- "https://records.nhl.com/site/api"
   if (endpoint==1){
-    endpoint<-"/franchise"
-    call<-paste0(base,endpoint)
-    get<-GET(call)
-    get_text<-content(get,"text")
-    get_json<-fromJSON(get_text,flatten= TRUE)
-    get_df<-as.data.frame(get_json)
+      endpoint<-"/franchise"
+      call<-paste0(base,endpoint)
+      get<-GET(call)
+      get_text<-content(get,"text")
+      get_json<-fromJSON(get_text,flatten= TRUE)
+      get_df<-as.data.frame(get_json)
   }
   else if (endpoint==2){
-    endpoint<-"/franchise-team-totals"
-    call<-paste0(base,endpoint)
-    get<-GET(call)
-    get_text<-content(get,"text")
-    get_json<-fromJSON(get_text,flatten= TRUE)
-    get_df<-as.data.frame(get_json)
+      endpoint<-"/franchise-team-totals"
+      call<-paste0(base,endpoint)
+      get<-GET(call)
+      get_text<-content(get,"text")
+      get_json<-fromJSON(get_text,flatten= TRUE)
+      get_df<-as.data.frame(get_json)
   }
   else if (endpoint==3){
-    endpoint<-"/franchise-season-records?cayenneExp=franchiseId"
-   franchise<- ifelse(!is.numeric(franchise),unname(flook[franchise]),franchise)
-    call<-paste0(base,endpoint,"=",franchise)
-    get<-GET(call)
-    get_text<-content(get,"text")
-    get_json<-fromJSON(get_text,flatten= TRUE)
-    get_df<-as.data.frame(get_json)
+      endpoint<-"/franchise-season-records?cayenneExp=franchiseId"
+      franchise<- ifelse(!is.numeric(franchise),unname(flook[franchise]),franchise)
+      call<-paste0(base,endpoint,"=",franchise)
+      get<-GET(call)
+      get_text<-content(get,"text")
+      get_json<-fromJSON(get_text,flatten= TRUE)
+      get_df<-as.data.frame(get_json)
   }
   else if (endpoint==4){
-    endpoint<-"/franchise-goalie-records?cayenneExp=franchiseId"
-    franchise<- ifelse(!is.numeric(franchise),unname(flook[franchise]),franchise)
-    call<-paste0(base,endpoint,"=",franchise)
-    get<-GET(call)
-    get_text<-content(get,"text")
-    get_json<-fromJSON(get_text,flatten= TRUE)
-    get_df<-as.data.frame(get_json)
+      endpoint<-"/franchise-goalie-records?cayenneExp=franchiseId"
+      franchise<- ifelse(!is.numeric(franchise),unname(flook[franchise]),franchise)
+      call<-paste0(base,endpoint,"=",franchise)
+      get<-GET(call)
+      get_text<-content(get,"text")
+      get_json<-fromJSON(get_text,flatten= TRUE)
+      get_df<-as.data.frame(get_json)
   }
   else{
-    endpoint<-"/franchise-skater-records?cayenneExp=franchiseId"
-    franchise<- ifelse(!is.numeric(franchise),unname(flook[franchise]),franchise)
-    call<-paste0(base,endpoint,"=",franchise)
-    get<-GET(call)
-    get_text<-content(get,"text")
-    get_json<-fromJSON(get_text,flatten= TRUE)
-    get_df<-as.data.frame(get_json)
+      endpoint<-"/franchise-skater-records?cayenneExp=franchiseId"
+      franchise<- ifelse(!is.numeric(franchise),unname(flook[franchise]),franchise)
+      call<-paste0(base,endpoint,"=",franchise)
+      get<-GET(call)
+      get_text<-content(get,"text")
+      get_json<-fromJSON(get_text,flatten= TRUE)
+      get_df<-as.data.frame(get_json)
   }
 }
 
@@ -89,7 +91,7 @@ data4<-records(4,"San Jose Sharks")
 data5<-records(5,"New Jersey Devils")
 ```
 
-# Functions read stats API
+# Create a function to read stats API
 
 ``` r
 #create a function to get stats
@@ -97,100 +99,100 @@ data5<-records(5,"New Jersey Devils")
 nhlstats<-function(modifiers,teamID=NULL,season=NULL,teams=NULL){
   base2<-"https://statsapi.web.nhl.com/api/v1/teams/"
   if (modifiers==1){
-    modifiers<-"?expand=team.roster"
-    call2<-paste0(base2,teamID,modifiers)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
-    get3_df<-get2_df%>%select(-teams.roster.roster)
-    roster_df<-data.frame(get2_df$teams.roster.roster[[1]])
-    get2_df<-cbind(get3_df,roster_df)
+      modifiers<-"?expand=team.roster"
+      call2<-paste0(base2,teamID,modifiers)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
+      get2_df<-as.data.frame(get2_json)
+      get3_df<-get2_df%>%select(-teams.roster.roster)
+      roster_df<-data.frame(get2_df$teams.roster.roster[[1]])
+      get2_df<-cbind(get3_df,roster_df)
   }
   else if (modifiers==2){
-    modifiers<-"?expand=person.names"
-    call2<-paste0(base2,teamID,modifiers)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
+      modifiers<-"?expand=person.names"
+      call2<-paste0(base2,teamID,modifiers)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
+      get2_df<-as.data.frame(get2_json)
   }
   else if (modifiers==3){
-    modifiers<-"?expand=team.schedule.next"
-    call2<-paste0(base2,teamID,modifiers)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
-    if (!is.null(get2_df$teams.nextGameSchedule.dates)){
-      get3_df<-get2_df%>%select(-teams.nextGameSchedule.dates)
-      roster_df<-data.frame(get2_df$teams.nextGameSchedule.dates[[1]])
-      game<-data.frame(roster_df$games[[1]])
-      roster_df<-roster_df%>%select(-games)
-      get2_df<-cbind(get3_df,roster_df,game)}
-    else {
+      modifiers<-"?expand=team.schedule.next"
+      call2<-paste0(base2,teamID,modifiers)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
       get2_df<-as.data.frame(get2_json)
-       return(get2_df)}
-  }
-  else if (modifiers==4){
-    modifiers<-"?expand=team.schedule.previous"
-    call2<-paste0(base2,teamID,modifiers)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
-      if (!is.null(get2_df$teams.previousGameSchedule.dates)){
-        get3_df<-get2_df%>%select(-teams.previousGameSchedule.dates)
-        
-        roster_df<-data.frame(get2_df$teams.previousGameSchedule.dates[[1]])
+      if (!is.null(get2_df$teams.nextGameSchedule.dates)){
+        get3_df<-get2_df%>%select(-teams.nextGameSchedule.dates)
+        roster_df<-data.frame(get2_df$teams.nextGameSchedule.dates[[1]])
         game<-data.frame(roster_df$games[[1]])
         roster_df<-roster_df%>%select(-games)
         get2_df<-cbind(get3_df,roster_df,game)}
-     else {
+      else {
+        get2_df<-as.data.frame(get2_json)
+        return(get2_df)}
+  }
+  else if (modifiers==4){
+      modifiers<-"?expand=team.schedule.previous"
+      call2<-paste0(base2,teamID,modifiers)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
       get2_df<-as.data.frame(get2_json)
-       return(get2_df)}
+      if (!is.null(get2_df$teams.previousGameSchedule.dates)){
+          get3_df<-get2_df%>%select(-teams.previousGameSchedule.dates)
+          
+          roster_df<-data.frame(get2_df$teams.previousGameSchedule.dates[[1]])
+          game<-data.frame(roster_df$games[[1]])
+          roster_df<-roster_df%>%select(-games)
+          get2_df<-cbind(get3_df,roster_df,game)}
+     else {
+          get2_df<-as.data.frame(get2_json)
+          return(get2_df)}
    }
   else if (modifiers==5){
-    modifiers<-"?expand=team.stats"
-    call2<-paste0(base2,teamID,modifiers)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
-    roster_df<-data.frame(get2_df$teams.teamStats[[1]])
-    game<-data.frame(roster_df$splits[[1]])
-    roster<-cbind(get2_df,roster_df,game)
-    get2_df<-roster%>%select(-c(splits,teams.teamStats))
+      modifiers<-"?expand=team.stats"
+      call2<-paste0(base2,teamID,modifiers)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
+      get2_df<-as.data.frame(get2_json)
+      roster_df<-data.frame(get2_df$teams.teamStats[[1]])
+      game<-data.frame(roster_df$splits[[1]])
+      roster<-cbind(get2_df,roster_df,game)
+      get2_df<-roster%>%select(-c(splits,teams.teamStats))
   }
   else if (modifiers==6){
-    modifiers<-"?expand=team.roster&season"
-    call2<-paste0(base2,teamID,modifiers,"=",season)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
-    roster_df<-data.frame(get2_df$teams.roster.roster[[1]])
-    roster<-cbind(get2_df,roster_df)
-    get2_df<-roster%>%select(-teams.roster.roster)
+      modifiers<-"?expand=team.roster&season"
+      call2<-paste0(base2,teamID,modifiers,"=",season)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
+      get2_df<-as.data.frame(get2_json)
+      roster_df<-data.frame(get2_df$teams.roster.roster[[1]])
+      roster<-cbind(get2_df,roster_df)
+      get2_df<-roster%>%select(-teams.roster.roster)
   }
   else if (modifiers==7){
-    base2<-"https://statsapi.web.nhl.com/api/v1/teams"
-    modifiers<-"?teamId"
-    # team<- ifelse(!is.numeric(team),unname(tlook[team]),team)
-    call2<-paste0(base2,modifiers,"=",teams)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
+      base2<-"https://statsapi.web.nhl.com/api/v1/teams"
+      modifiers<-"?teamId"
+      # team<- ifelse(!is.numeric(team),unname(tlook[team]),team)
+      call2<-paste0(base2,modifiers,"=",teams)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
+      get2_df<-as.data.frame(get2_json)
   }
   else if (modifiers==8){
-    base2<-"https://statsapi.web.nhl.com/api/v1/teams"
-    modifiers<-"?stats=statsSingleSeasonPlayoffs"
-    call2<-paste0(base2,modifiers)
-    get2<-GET(call2)
-    get2_text<-content(get2,"text")
-    get2_json<-fromJSON(get2_text,flatten= TRUE)
-    get2_df<-as.data.frame(get2_json)
+      base2<-"https://statsapi.web.nhl.com/api/v1/teams"
+      modifiers<-"?stats=statsSingleSeasonPlayoffs"
+      call2<-paste0(base2,modifiers)
+      get2<-GET(call2)
+      get2_text<-content(get2,"text")
+      get2_json<-fromJSON(get2_text,flatten= TRUE)
+      get2_df<-as.data.frame(get2_json)
     }
 }  
 
@@ -204,7 +206,7 @@ stat7<-nhlstats(modifiers = 7,teams = "4,5")
 stat8<-nhlstats(modifiers = 8)
 ```
 
-# create a wrapper function
+# Create a wrapper function
 
 ``` r
 stopshop<-function(endpoint=NULL, franchise=NULL, modifiers=NULL,teamID=NULL, teams=NULL,season=NULL){
