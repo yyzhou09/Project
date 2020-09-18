@@ -3,7 +3,7 @@ Project 1
 Yuying Zhou
 9/14/2020
 
-  - [Needed Packages](#needed-packages)
+  - [Packages List](#packages-list)
   - [Create a function to read NHL
     records](#create-a-function-to-read-nhl-records)
   - [Create a function to read stats
@@ -17,12 +17,16 @@ Yuying Zhou
           - [Homewins Histogram Plot](#homewins-histogram-plot)
           - [Roadwins boxplot](#roadwins-boxplot)
           - [Homewins vs Roadwins Plot](#homewins-vs-roadwins-plot)
+          - [Correlation Plot](#correlation-plot)
       - [Active Goalie from
         FranchiseID=1](#active-goalie-from-franchiseid1)
           - [Table](#table)
           - [Bar Plot](#bar-plot)
+      - [Join Franchisetotals with golie from franchise
+        1](#join-franchisetotals-with-golie-from-franchise-1)
+      - [Roster for Team 1](#roster-for-team-1)
 
-# Needed Packages
+# Packages List
 
 ``` r
 #load packageds
@@ -30,6 +34,7 @@ library(httr)
 library(jsonlite)
 library(tidyverse)
 library(knitr)
+library(corrplot)
 ```
 
 # Create a function to read NHL records
@@ -48,7 +53,7 @@ flook<-franchisetable$data.franchiseId
 names(flook)<-franchisetable$data.franchiseName
 
 #create the function
-# functions with endpoints, users can put endpoint 1-5 for different endpoints
+#functions with endpoints, users can put endpoint 1-5 for different endpoints
 records<-function(endpoint,franchise=NULL){
   base<- "https://records.nhl.com/site/api"
   if (endpoint==1){
@@ -95,12 +100,6 @@ records<-function(endpoint,franchise=NULL){
       get_df<-as.data.frame(get_json)
   }
 }
-
-data1<-records(endpoint=1)
-data2<-records(2)
-data3<-records(3,"San Jose Sharks")
-data4<-records(4,"San Jose Sharks")
-data5<-records(5,"New Jersey Devils")
 ```
 
 # Create a function to read stats API
@@ -207,15 +206,6 @@ nhlstats<-function(modifiers,teamID=NULL,season=NULL,teams=NULL){
       get2_df<-as.data.frame(get2_json)
     }
 }  
-
-stat1<-nhlstats(modifiers = 1,teamID = 14)
-stat2<-nhlstats(modifiers = 2,teamID = 14)
-stat3<-nhlstats(modifiers = 3, teamID =25)
-stat4<-nhlstats(modifiers = 4, teamID = 1)
-stat5<-nhlstats(modifiers = 5,teamID = 1)
-stat6<-nhlstats(modifiers = 6, teamID=14,season = "20112012")
-stat7<-nhlstats(modifiers = 7,teams = "4,5")
-stat8<-nhlstats(modifiers = 8)
 ```
 
 # Create a wrapper function
@@ -223,10 +213,11 @@ stat8<-nhlstats(modifiers = 8)
 ``` r
 stopshop<-function(endpoint=NULL, franchise=NULL, modifiers=NULL,teamID=NULL, teams=NULL,season=NULL){
   if(!is.null(endpoint)){
-  record<-records(endpoint,franchise)}
+    record<-records(endpoint,franchise)}
   else if (!is.null(modifiers)){
-  stat<-nhlstats(modifiers,teamID,season,teams)
-  }}
+    stat<-nhlstats(modifiers,teamID,season,teams)
+  }
+}
 ```
 
 # Create datasets for use in the analysis later
@@ -234,14 +225,17 @@ stopshop<-function(endpoint=NULL, franchise=NULL, modifiers=NULL,teamID=NULL, te
 ``` r
 #create a dataset from API records endpoint franchise-team-totals
 franchisetotals<-stopshop(endpoint = 2)
-l<-stopshop(endpoint = 3,franchise = 1)
+
 #create a goalie dataset for franchise ID 1 
 goalie<-stopshop(endpoint = 4, franchise = 1)
 goalie<-as.tibble(goalie)
+
 #create a skater dataset for franchise name Montréal Canadiens
+#This is also a test to see if franchise name works
 skater<-stopshop(endpoint = 5, franchise = "Montréal Canadiens")
-#create a dataset for team1 stats
-stats_team1<-stopshop(modifiers = 5,teamID = 1)
+
+#create a roaster for team1 stats
+roasters_team1<-stopshop(modifiers = 1,teamID = 1)
 ```
 
 # Explore data
@@ -258,9 +252,12 @@ franchise, 13 are with gameType of 2 and 5 are with gameType of 3.
 ``` r
 #convert activeFranchise and typeID to a factor
 franchisetotals$data.activeFranchise<-as.factor(franchisetotals$data.activeFranchise)
-franchisetotals$data.gameTypeId<-as.factor(franchisetotals$data.gameTypeId)
-active<-table(franchisetotals$data.activeFranchise,franchisetotals$data.gameTypeId)
-active_2<-kable(active, caption = "TABLE 1: Franchise Played Games in History",col.names = c("Regular Season","Post Season"))
+franchisetotals$data.gameTypeId2<-as.factor(franchisetotals$data.gameTypeId)
+
+#Make a contengency table showes count for active franchise and game type combinations
+active<-table(franchisetotals$data.activeFranchise,franchisetotals$data.gameTypeId2)
+#use kable function to make it looks better
+active_2<-kable(active, caption = "TABLE: Franchise Played Games in History",col.names = c("Regular Season","Post Season"))
 active_2
 ```
 
@@ -269,7 +266,7 @@ active_2
 | 0 |             13 |           5 |
 | 1 |             44 |          43 |
 
-TABLE 1: Franchise Played Games in History
+TABLE: Franchise Played Games in History
 
 ### Homewins Histogram Plot
 
@@ -279,7 +276,7 @@ there are more home wins in regular season.
 
 ``` r
 g<-ggplot(data=franchisetotals,aes(x=data.homeWins))
-g+geom_histogram(aes(y=..density..,fill=as.factor(data.gameTypeId)),binwidth = 200)+scale_fill_discrete(name="Game Type",labels=c("Regular Season","Post Season"))+geom_density( alpha=0.5,color="red",lwd=1,outline.type = "full",aes(fill=as.factor(data.gameTypeId)),position = "stack")+labs(y="Density",x="Home Wins",title="Figure 1: Histogram of Home Wins for All Franchises")
+g+geom_histogram(aes(y=..density..,fill=as.factor(data.gameTypeId)),binwidth = 200)+scale_fill_discrete(name="Game Type",labels=c("Regular Season","Post Season"))+geom_density( alpha=0.5,color="red",lwd=1,outline.type = "full",aes(fill=as.factor(data.gameTypeId)),position = "stack")+labs(y="Density",x="Home Wins",title="Figure: Histogram of Home Wins for All Franchises")
 ```
 
 ![](Project1_files/figure-gfm/homeswins%20plot-1.png)<!-- -->
@@ -291,22 +288,38 @@ season than post regular season.
 
 ``` r
 g<-ggplot(data=franchisetotals,aes(y=data.roadWins,x=as.factor(data.gameTypeId)))
-g+geom_boxplot()+geom_jitter(aes(color= as.factor(data.gameTypeId)))+scale_color_discrete(name="Game Type",labels=c("Reguar Season","Post Season"))+labs(x="Game Type",y="Road Wins",title="Figure 3: Road Wins Boxplot")
+g+geom_boxplot()+geom_jitter(aes(color= as.factor(data.gameTypeId)))+scale_color_discrete(name="Game Type",labels=c("Reguar Season","Post Season"))+labs(x="Game Type",y="Road Wins",title="Figure: Road Wins Boxplot")
 ```
 
-![](Project1_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](Project1_files/figure-gfm/boxplot-1.png)<!-- -->
 
 ### Homewins vs Roadwins Plot
 
-As shown in Figure 4, road wins and home wins are highly correlated. THe
-relaitonship is linear and postive.
+As shown in Figure below, road wins and home wins are highly correlated.
+THe relaitonship is linear and postive.
 
 ``` r
 g<-ggplot(data=franchisetotals,aes(x=data.homeWins,y=data.roadWins))
-g+geom_point(aes(group=as.factor(data.gameTypeId),color=as.factor(data.gameTypeId)))+geom_smooth(method=lm,aes(group=as.factor(data.gameTypeId)),color="green")+facet_wrap(~data.gameTypeId,labeller = label_both)+labs(title="Figure 4: Home Wins vs Road Wins",x="Home Wins",y="Road Wins")+scale_color_discrete (name="Game Type",labels=c("Regular","Post"))
+g+geom_point(aes(group=as.factor(data.gameTypeId),color=as.factor(data.gameTypeId)))+geom_smooth(method=lm,aes(group=as.factor(data.gameTypeId)),color="green")+facet_wrap(~data.gameTypeId,labeller = label_both)+labs(title="Figure: Home Wins vs Road Wins",x="Home Wins",y="Road Wins")+scale_color_discrete (name="Game Type",labels=c("Regular","Post"))
 ```
 
-![](Project1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](Project1_files/figure-gfm/scatter-1.png)<!-- -->
+
+### Correlation Plot
+
+As shown in the plot below, home wins is highly correlated with road
+wins, homelosses,roadlosses,hometies, and road ties. Since the sample
+size is small, extra cautions are needed to make any interferences.
+
+``` r
+#create a dataset only includes gameType==2 for wins, losses, and ties, also remove rows with na.
+franchisetotals_R<-franchisetotals%>%filter(data.gameTypeId==2)%>%select(contains("Wins"),contains("Loss"),contains("Tie"))%>%filter(across(everything(), ~ !is.na(.x)))
+correlation<-cor(franchisetotals_R,method="spearman")
+corr_plot<-corrplot(correlation, type="upper")
+mtext("Example Plot", at=2.5, line=-0.5, cex=2)
+```
+
+![](Project1_files/figure-gfm/corrplot-1.png)<!-- -->
 
 ## Active Goalie from FranchiseID=1
 
@@ -316,7 +329,7 @@ There are 37 in the franchise “Montréal Canadiens” and 788 in the
 franchise "“Montréal Canadiens”". 35 goalie retired from the franchise.
 
 ``` r
-goalie_table<-kable(table(goalie$data.activePlayer), caption = "TABLE 2: Goalie of Montréal Canadiens", col.names = c("active player","count"))
+goalie_table<-kable(table(goalie$data.activePlayer), caption = "TABLE: Goalie of Montréal Canadiens", col.names = c("active player","count"))
 goalie_table
 ```
 
@@ -325,7 +338,7 @@ goalie_table
 | FALSE         |    35 |
 | TRUE          |     2 |
 
-TABLE 2: Goalie of Montréal Canadiens
+TABLE: Goalie of Montréal Canadiens
 
 ### Bar Plot
 
@@ -333,7 +346,79 @@ As shown in Figure, 35 goalie were retired and 2 goalie are active.
 
 ``` r
 g<-ggplot(data=goalie,aes(x=data.activePlayer))
-g+geom_bar()+labs(x="Players", title = "Figure 2: Bar Plot for Goglie of Franchise Montréal Canadiens")+scale_x_discrete(labels=c("Inactive","Active"))
+g+geom_bar()+labs(x="Players", title = "Figure: Bar Plot for Goglie of Franchise Montréal Canadiens")+scale_x_discrete(labels=c("Inactive","Active"))
 ```
 
-![](Project1_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Project1_files/figure-gfm/barplot-1.png)<!-- -->
+
+## Join Franchisetotals with golie from franchise 1
+
+In this section, I joined two tables using inner\_join. And created two
+new viarablels:
+
+  - gameprop:the proprotion of game played by the player to total game
+    played by thier franchise.  
+  - winprop: proportion of wins received by the player to the
+    franchise’s total wins in the history.
+
+As shown in the summarize below, for active players, they attened on
+average 5% of total gamees in thier franchise history, and for inactive
+players, they atteneded on average 1.6% of total games in their
+franchise history.
+
+The findings were similar for win proportions. For active players, they
+received 5% of total wins in their franchise history and for inactive
+players, they recieved 1.6% of total wins in their franchise history.
+
+``` r
+#Join two datasets by gametypeID and franchiseID
+goalie_fr<-inner_join(franchisetotals,goalie,by=c("data.gameTypeId","data.franchiseId"))
+
+#get the proportion of gamesplayed and wins for each goalie
+goalie_fr<-goalie_fr%>%mutate(gameprop=data.gamesPlayed.y/data.gamesPlayed.x,winprop=data.wins.y/data.wins.x)
+
+#summarize gameproportaion for the categorical variable active player
+goalie_fr$data.activePlayer<-as.factor(goalie_fr$data.activePlayer)
+t1<-goalie_fr%>%group_by(data.activePlayer)%>%
+          summarise(avggame=mean(gameprop),medgame=median(gameprop),vargame=var(gameprop),.groups = 'drop')
+t1
+```
+
+    ## # A tibble: 2 x 4
+    ##   data.activePlayer avggame medgame  vargame
+    ##   <fct>               <dbl>   <dbl>    <dbl>
+    ## 1 FALSE              0.0164 0.00698 0.000487
+    ## 2 TRUE               0.0511 0.0511  0.00504
+
+``` r
+t2<-goalie_fr%>%group_by(data.activePlayer)%>%
+          summarise(avgwin=mean(winprop),medwin=median(winprop),varwin=var(winprop),.groups = 'drop')
+t2
+```
+
+    ## # A tibble: 2 x 4
+    ##   data.activePlayer avgwin  medwin   varwin
+    ##   <fct>              <dbl>   <dbl>    <dbl>
+    ## 1 FALSE             0.0160 0.00522 0.000574
+    ## 2 TRUE              0.0506 0.0506  0.00506
+
+## Roster for Team 1
+
+There are 21 players in New Jersey Devils. 7 are denfenseman, 12 are
+forward, and 2 are goalie.
+
+``` r
+#create a summary table for postion type
+ro_t<-table(roasters_team1$position.type)
+
+#use kable function to make the table look =better
+kable(ro_t,caption="Table: Number of Player for Each Postion", col.names = c("Postion","Count"))
+```
+
+| Postion    | Count |
+| :--------- | ----: |
+| Defenseman |     7 |
+| Forward    |    12 |
+| Goalie     |     2 |
+
+Table: Number of Player for Each Postion
